@@ -21,7 +21,6 @@ def handler(event, context):
         user = user_table.get_item(Key={"email": email})
         if 'Item' not in user:
             return send_response(status=StatusCode.HTTP_NOT_FOUND_404, message=Messages.NOT_FOUND)
-        print(user.get('Item'))
         return send_response(data=user.get('Item'))
     except Exception as ex:
         return send_response(

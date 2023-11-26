@@ -41,7 +41,6 @@ def handler(event, context):
             },
             ReturnValues='ALL_NEW'
         )
-        print(response)
         return send_response(data=response.get('Attributes'))
     except Exception as ex:
         return send_response(
