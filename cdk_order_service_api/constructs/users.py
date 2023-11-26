@@ -66,10 +66,25 @@ class Users(Construct):
 
         )
 
+        delete_user = _lambda.Function(
+            self, 'delete-user',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/users'),
+            handler='delete_user.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
+                'USER_TABLE': models.user_table.table_name,
+                'USER_EMAIL_TABLE': models.user_email_table.table_name
+            }
+
+        )
+
         # Add integration between the API Gateway and the Lambda function
         create_user_integration = HttpLambdaIntegration('create-user-integration', create_user)
         get_user_integration = HttpLambdaIntegration('get-user-integration', get_user)
         update_user_integration = HttpLambdaIntegration('update-user-integration', update_user)
+        delete_user_integration = HttpLambdaIntegration('delete-user-integration', delete_user)
 
         # Add a default route to the API Gateway with the Lambda integration
         api.add_routes(
@@ -89,6 +104,12 @@ class Users(Construct):
             integration=update_user_integration
         )
 
+        api.add_routes(
+            path='/api/users/{userid+}',
+            methods=[apigateway.HttpMethod.DELETE],
+            integration=delete_user_integration
+        )
+
         # Grant Permission to table
         models.user_table.grant_read_write_data(create_user)
         models.user_email_table.grant_read_write_data(create_user)
@@ -98,4 +119,7 @@ class Users(Construct):
 
         models.user_email_table.grant_read_data(update_user)
         models.user_table.grant_read_write_data(update_user)
+
+        models.user_email_table.grant_read_write_data(delete_user)
+        models.user_table.grant_read_write_data(delete_user)
 

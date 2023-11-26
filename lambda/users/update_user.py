@@ -26,7 +26,7 @@ def handler(event, context):
         user_email = user_email_table.get_item(Key={"id": user_id})
 
         if 'Item' not in user_email:
-            return send_response(status=StatusCode.HTTP_NOT_FOUND_404, message=Messages.NOT_FOUND, data=user_email)
+            return send_response(status=StatusCode.HTTP_NOT_FOUND_404, message=Messages.NOT_FOUND)
         email = user_email.get('Item').get('email')
 
         response = user_table.update_item(
