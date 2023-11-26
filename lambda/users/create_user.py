@@ -7,7 +7,8 @@ from src.constants.status_codes import StatusCode, Messages
 from src.helpers.utils import send_response
 
 ddb = boto3.resource('dynamodb')
-table = ddb.Table(os.environ.get('USER_TABLE'))
+user_table = ddb.Table(os.environ.get('USER_TABLE'))
+user_email_table = ddb.Table(os.environ.get('USER_EMAIL_TABLE'))
 _lambda = boto3.client('lambda')
 
 
@@ -29,19 +30,29 @@ def handler(event, context):
             return send_response(status=StatusCode.HTTP_BAD_REQUEST_400,
                                  message=Messages.BAD_REQUEST_INVALID_PARAMETER.format('email'))
 
+        user_id = uuid.uuid4().hex
+        email = body.get('email').lower().strip()
         user_data = {
-            'id': uuid.uuid4().hex,
-            'first_name': body.get('first_name'),
-            'last_name': body.get('last_name'),
-            'email': body.get('email')
+            'id': user_id,
+            'first_name': str(body.get('first_name')),
+            'last_name': str(body.get('last_name')),
+            'email': email
         }
 
-        user = table.get_item(Key={"email": body.get('email')})
+        user_email_data = {
+            'id': user_id,
+            'email': email
+        }
+
+        user = user_table.get_item(Key={"email": body.get('email')})
         if 'Item' in user:
             return send_response(status=StatusCode.HTTP_BAD_REQUEST_400, message=Messages.BAD_REQUEST_EMAIL_EXIST)
 
-        table.put_item(
+        user_table.put_item(
             Item=user_data
+        )
+        user_email_table.put_item(
+            Item=user_email_data
         )
         return send_response(data=user_data)
     except Exception as ex:

@@ -32,19 +32,44 @@ class Users(Construct):
             layers=[dependency_layer],
             log_retention=cwLogs.RetentionDays.ONE_WEEK,
             environment={
-                'USER_TABLE': models.user_table.table_name
+                'USER_TABLE': models.user_table.table_name,
+                'USER_EMAIL_TABLE': models.user_email_table.table_name
+            }
+
+        )
+
+        get_user = _lambda.Function(
+            self, 'get-user',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/users'),
+            handler='get_user.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
+                'USER_TABLE': models.user_table.table_name,
+                'USER_EMAIL_TABLE': models.user_email_table.table_name
             }
 
         )
 
         # Add integration between the API Gateway and the Lambda function
-        integration = HttpLambdaIntegration('create-user-integration', create_user)
+        create_user_integration = HttpLambdaIntegration('create-user-integration', create_user)
+        get_user_integration = HttpLambdaIntegration('get-user-integration', get_user)
 
         # Add a default route to the API Gateway with the Lambda integration
         api.add_routes(
             path='/api/users',
             methods=[apigateway.HttpMethod.POST],
-            integration=integration
+            integration=create_user_integration
+        )
+        api.add_routes(
+            path='/api/users/{userid+}',
+            methods=[apigateway.HttpMethod.GET],
+            integration=get_user_integration
         )
 
+        # Grant Permission to table
         models.user_table.grant_read_write_data(create_user)
+        models.user_email_table.grant_read_write_data(create_user)
+        models.user_email_table.grant_read_data(get_user)
+        models.user_table.grant_read_data(get_user)
