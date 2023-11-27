@@ -1,3 +1,8 @@
+# To Run the Project you will need to add your email address for the alert subscription
+
+In ``/cdk_order_service_api/constructs/orders.py`` add the email address in the subscription constructor.
+
+
 
 # Welcome to your CDK Python project!
 
