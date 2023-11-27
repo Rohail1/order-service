@@ -66,7 +66,19 @@ class Orders(Construct):
             layers=[dependency_layer],
             log_retention=cwLogs.RetentionDays.ONE_WEEK,
             environment={
-                'USER_EMAIL_TABLE': models.user_email_table.table_name,
+                'ORDER_TABLE': models.order_table.table_name
+            }
+
+        )
+
+        admin_delete_order = _lambda.Function(
+            self, 'admin-delete-order',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/orders'),
+            handler='admin_delete_order.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
                 'ORDER_TABLE': models.order_table.table_name
             }
 
@@ -77,6 +89,7 @@ class Orders(Construct):
         get_user_order_details_integration = HttpLambdaIntegration('get-user-order-details-integration',
                                                                    get_user_order_details)
         admin_get_orders_integration = HttpLambdaIntegration('admin-get-orders-integration', admin_get_orders)
+        admin_delete_order_integration = HttpLambdaIntegration('admin-delete-order-integration', admin_delete_order)
 
         api.add_routes(
             path='/api/users/{userid}/orders',
@@ -88,7 +101,6 @@ class Orders(Construct):
             methods=[apigateway.HttpMethod.GET],
             integration=get_user_orders_integration
         )
-
         api.add_routes(
             path='/api/users/{userid}/orders/{orderid}',
             methods=[apigateway.HttpMethod.GET],
@@ -98,6 +110,11 @@ class Orders(Construct):
             path='/api/admin/orders',
             methods=[apigateway.HttpMethod.GET],
             integration=admin_get_orders_integration
+        )
+        api.add_routes(
+            path='/api/admin/orders/{orderid}',
+            methods=[apigateway.HttpMethod.DELETE],
+            integration=admin_delete_order_integration
         )
 
 
@@ -112,3 +129,5 @@ class Orders(Construct):
         models.order_table.grant_read_data(get_user_order_details)
 
         models.order_table.grant_read_data(admin_get_orders)
+
+        models.order_table.grant_read_write_data(admin_delete_order)
