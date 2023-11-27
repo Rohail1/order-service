@@ -1,8 +1,12 @@
+import os
+
 from constructs import Construct
 from aws_cdk import (
+    aws_sns as sns,
     aws_lambda as _lambda,
     aws_logs as cwLogs,
     aws_apigatewayv2_alpha as apigateway,
+    aws_lambda_event_sources as lambda_event_sources
 )
 
 from aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
@@ -15,6 +19,10 @@ class Orders(Construct):
                  dependency_layer: _lambda.LayerVersion,  **kwargs) -> None:
 
         super().__init__(scope, construct_id, **kwargs)
+
+        order_topic = sns.Topic(self, 'order_updates')
+        subscription = sns.Subscription(self, 'email-subscription', endpoint='', # <- Add Email here
+                                        topic=order_topic, protocol=sns.SubscriptionProtocol.EMAIL)
 
         create_user_order = _lambda.Function(
             self, 'create-order',
@@ -97,6 +105,23 @@ class Orders(Construct):
 
         )
 
+        order_lambda_trigger = _lambda.Function(
+            self, 'order-lambda-trigger',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/orders'),
+            handler='order_lambda_trigger.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
+                'ORDER_TABLE': models.order_table.table_name,
+                'ORDER_TOPIC_ARN': order_topic.topic_arn,
+            }
+        )
+
+        order_lambda_trigger.add_event_source(
+            lambda_event_sources.DynamoEventSource(models.order_table,
+                                                   starting_position=_lambda.StartingPosition.LATEST))
+
         create_order_integration = HttpLambdaIntegration('create-order-integration', create_user_order)
         get_user_orders_integration = HttpLambdaIntegration('get-user-orders-integration', get_user_orders)
         get_user_order_details_integration = HttpLambdaIntegration('get-user-order-details-integration',
@@ -153,3 +178,5 @@ class Orders(Construct):
         models.order_table.grant_read_write_data(admin_delete_order)
 
         models.order_table.grant_read_write_data(admin_change_order_status)
+
+        order_topic.grant_publish(order_lambda_trigger)
