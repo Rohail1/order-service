@@ -43,6 +43,7 @@ class Models(Construct):
             partition_key={
                 'name': 'id', 'type': dynamodb.AttributeType.STRING
             },
+            stream=dynamodb.StreamViewType.NEW_AND_OLD_IMAGES,
             removal_policy=RemovalPolicy.DESTROY
            )
 

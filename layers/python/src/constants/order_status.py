@@ -7,14 +7,15 @@ class OrderStatus:
 
     STATUSES = ['completed', 'accepted', 'pending', 'rejected']
 
-    def get_status(self,  status):
+    @classmethod
+    def get_status(cls,  status):
         if status == 'completed':
-            return self.COMPLETED
+            return cls.COMPLETED
         elif status == 'accepted':
-            return self.ACCEPTED
+            return cls.ACCEPTED
         elif status == 'rejected':
-            return self.REJECTED
+            return cls.REJECTED
         elif status == 'pending':
-            return self.PENDING
+            return cls.PENDING
         else:
-            return self.PENDING
+            return cls.PENDING

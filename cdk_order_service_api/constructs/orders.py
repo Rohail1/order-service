@@ -84,12 +84,27 @@ class Orders(Construct):
 
         )
 
+        admin_change_order_status = _lambda.Function(
+            self, 'admin-change-order-status',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/orders'),
+            handler='admin_change_order_status.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
+                'ORDER_TABLE': models.order_table.table_name
+            }
+
+        )
+
         create_order_integration = HttpLambdaIntegration('create-order-integration', create_user_order)
         get_user_orders_integration = HttpLambdaIntegration('get-user-orders-integration', get_user_orders)
         get_user_order_details_integration = HttpLambdaIntegration('get-user-order-details-integration',
                                                                    get_user_order_details)
         admin_get_orders_integration = HttpLambdaIntegration('admin-get-orders-integration', admin_get_orders)
         admin_delete_order_integration = HttpLambdaIntegration('admin-delete-order-integration', admin_delete_order)
+        admin_change_order_status_integration = HttpLambdaIntegration('admin-change-order-status-integration',
+                                                                      admin_change_order_status)
 
         api.add_routes(
             path='/api/users/{userid}/orders',
@@ -116,6 +131,11 @@ class Orders(Construct):
             methods=[apigateway.HttpMethod.DELETE],
             integration=admin_delete_order_integration
         )
+        api.add_routes(
+            path='/api/admin/orders/{orderid}',
+            methods=[apigateway.HttpMethod.PUT],
+            integration=admin_change_order_status_integration
+        )
 
 
         # Grant Permission to table
@@ -131,3 +151,5 @@ class Orders(Construct):
         models.order_table.grant_read_data(admin_get_orders)
 
         models.order_table.grant_read_write_data(admin_delete_order)
+
+        models.order_table.grant_read_write_data(admin_change_order_status)
