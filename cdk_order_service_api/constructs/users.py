@@ -1,10 +1,8 @@
 from constructs import Construct
 from aws_cdk import (
     aws_lambda as _lambda,
-    aws_dynamodb as dynamodb,
     aws_logs as cwLogs,
     aws_apigatewayv2_alpha as apigateway,
-    RemovalPolicy
 )
 
 from aws_cdk.aws_apigatewayv2_integrations_alpha import HttpLambdaIntegration
@@ -13,16 +11,10 @@ from cdk_order_service_api.constructs.models import Models
 
 class Users(Construct):
 
-    def __init__(self, scope: Construct, construct_id: str, api: apigateway.HttpApi, models=Models, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, api: apigateway.HttpApi, models: Models,
+                 dependency_layer: _lambda.LayerVersion, **kwargs) -> None:
+
         super().__init__(scope, construct_id, **kwargs)
-
-
-        dependency_layer = _lambda.LayerVersion(
-            self, 'dependencies',
-            code=_lambda.Code.from_asset('layers/'),
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_12],
-            layer_version_name='dependencies'
-        )
 
         create_user = _lambda.Function(
             self, 'create-user',
@@ -93,19 +85,19 @@ class Users(Construct):
             integration=create_user_integration
         )
         api.add_routes(
-            path='/api/users/{userid+}',
+            path='/api/users/{userid}',
             methods=[apigateway.HttpMethod.GET],
             integration=get_user_integration
         )
 
         api.add_routes(
-            path='/api/users/{userid+}',
+            path='/api/users/{userid}',
             methods=[apigateway.HttpMethod.PUT],
             integration=update_user_integration
         )
 
         api.add_routes(
-            path='/api/users/{userid+}',
+            path='/api/users/{userid}',
             methods=[apigateway.HttpMethod.DELETE],
             integration=delete_user_integration
         )

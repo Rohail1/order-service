@@ -2,6 +2,7 @@ import os
 import re
 import uuid
 import json
+import datetime
 import boto3
 from src.constants.status_codes import StatusCode, Messages
 from src.helpers.utils import send_response
@@ -9,7 +10,6 @@ from src.helpers.utils import send_response
 ddb = boto3.resource('dynamodb')
 user_table = ddb.Table(os.environ.get('USER_TABLE'))
 user_email_table = ddb.Table(os.environ.get('USER_EMAIL_TABLE'))
-_lambda = boto3.client('lambda')
 
 
 def handler(event, context):
@@ -36,9 +36,10 @@ def handler(event, context):
             'id': user_id,
             'first_name': str(body.get('first_name')),
             'last_name': str(body.get('last_name')),
-            'email': email
+            'email': email,
+            'created_at': datetime.datetime.now().isoformat(),
+            'updated_at': datetime.datetime.now().isoformat()
         }
-
         user_email_data = {
             'id': user_id,
             'email': email

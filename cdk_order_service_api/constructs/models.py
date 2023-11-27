@@ -7,14 +7,17 @@ from aws_cdk import (
 
 class Models(Construct):
 
+    @property
+    def user_email_table(self) -> dynamodb.Table:
+        return self._emails
 
     @property
     def user_table(self) -> dynamodb.Table:
         return self._users
 
     @property
-    def user_email_table(self) -> dynamodb.Table:
-        return self._emails
+    def order_table(self) -> dynamodb.Table:
+        return self._orders
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -34,4 +37,19 @@ class Models(Construct):
             },
             removal_policy=RemovalPolicy.DESTROY
            )
+
+        self._orders = dynamodb.Table(
+            self, 'orders',
+            partition_key={
+                'name': 'id', 'type': dynamodb.AttributeType.STRING
+            },
+            sort_key={'name': 'created_at', 'type': dynamodb.AttributeType.STRING},
+            removal_policy=RemovalPolicy.DESTROY
+           )
+
+        self._orders.add_global_secondary_index(
+            partition_key={'name': 'userid', 'type': dynamodb.AttributeType.STRING},
+            sort_key={'name': 'created_at', 'type': dynamodb.AttributeType.STRING},
+            index_name='user-id'
+        )
 

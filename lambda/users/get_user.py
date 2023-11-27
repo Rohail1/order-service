@@ -7,7 +7,6 @@ from src.helpers.utils import send_response
 ddb = boto3.resource('dynamodb')
 user_table = ddb.Table(os.environ.get('USER_TABLE'))
 user_email_table = ddb.Table(os.environ.get('USER_EMAIL_TABLE'))
-_lambda = boto3.client('lambda')
 
 
 def handler(event, context):

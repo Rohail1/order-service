@@ -1,13 +1,13 @@
 import os
 import json
 import boto3
+import datetime
 from src.constants.status_codes import StatusCode, Messages
 from src.helpers.utils import send_response
 
 ddb = boto3.resource('dynamodb')
 user_table = ddb.Table(os.environ.get('USER_TABLE'))
 user_email_table = ddb.Table(os.environ.get('USER_EMAIL_TABLE'))
-_lambda = boto3.client('lambda')
 
 
 def handler(event, context):
@@ -37,6 +37,9 @@ def handler(event, context):
                 },
                 'last_name': {
                     'Value': body.get('last_name')
+                },
+                'updated_at': {
+                    'Value': datetime.datetime.now().isoformat()
                 }
             },
             ReturnValues='ALL_NEW'

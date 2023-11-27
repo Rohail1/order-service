@@ -1,4 +1,5 @@
 import json
+import random
 from src.constants.status_codes import StatusCode, Messages
 
 
@@ -17,3 +18,12 @@ def send_response(status=StatusCode.HTTP_OK_200, message=Messages.SUCCESSFUL, da
             'data': data
         })
     }
+
+
+def get_currency():
+    return 'USD'
+
+
+def get_product_price(product_id):
+    # Just a dummy function
+    return random.randrange(1, 100)
