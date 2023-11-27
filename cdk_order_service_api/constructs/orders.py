@@ -16,7 +16,7 @@ class Orders(Construct):
 
         super().__init__(scope, construct_id, **kwargs)
 
-        create_order = _lambda.Function(
+        create_user_order = _lambda.Function(
             self, 'create-order',
             runtime=_lambda.Runtime.PYTHON_3_12,
             code=_lambda.Code.from_asset('lambda/orders'),
@@ -24,21 +24,43 @@ class Orders(Construct):
             layers=[dependency_layer],
             log_retention=cwLogs.RetentionDays.ONE_WEEK,
             environment={
-                'USER_TABLE': models.user_table.table_name,
                 'USER_EMAIL_TABLE': models.user_email_table.table_name,
                 'ORDER_TABLE': models.order_table.table_name
             }
 
         )
 
-        create_order_integration = HttpLambdaIntegration('create-order-integration', create_order)
+        get_user_orders = _lambda.Function(
+            self, 'get-user-orders',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/orders'),
+            handler='get_user_orders.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
+                'USER_EMAIL_TABLE': models.user_email_table.table_name,
+                'ORDER_TABLE': models.order_table.table_name
+            }
+
+        )
+
+        create_order_integration = HttpLambdaIntegration('create-order-integration', create_user_order)
+        get_user_orders_integration = HttpLambdaIntegration('get-user-orders-integration', get_user_orders)
 
         api.add_routes(
             path='/api/users/{userid}/orders',
             methods=[apigateway.HttpMethod.POST],
             integration=create_order_integration
         )
+        api.add_routes(
+            path='/api/users/{userid}/orders',
+            methods=[apigateway.HttpMethod.GET],
+            integration=get_user_orders_integration
+        )
 
         # Grant Permission to table
-        models.user_email_table.grant_read_data(create_order)
-        models.order_table.grant_read_write_data(create_order)
+        models.user_email_table.grant_read_data(create_user_order)
+        models.order_table.grant_read_write_data(create_user_order)
+
+        models.user_email_table.grant_read_data(get_user_orders)
+        models.order_table.grant_read_data(get_user_orders)

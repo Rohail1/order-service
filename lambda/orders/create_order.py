@@ -9,7 +9,6 @@ from src.helpers.utils import send_response, get_currency, get_product_price
 
 
 ddb = boto3.resource('dynamodb')
-user_table = ddb.Table(os.environ.get('USER_TABLE'))
 user_email_table = ddb.Table(os.environ.get('USER_EMAIL_TABLE'))
 order_table = ddb.Table(os.environ.get('ORDER_TABLE'))
 

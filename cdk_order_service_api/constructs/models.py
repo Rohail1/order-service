@@ -48,8 +48,8 @@ class Models(Construct):
            )
 
         self._orders.add_global_secondary_index(
-            partition_key={'name': 'userid', 'type': dynamodb.AttributeType.STRING},
+            partition_key={'name': 'user_id', 'type': dynamodb.AttributeType.STRING},
             sort_key={'name': 'created_at', 'type': dynamodb.AttributeType.STRING},
-            index_name='user-id'
+            index_name='user_id'
         )
 
