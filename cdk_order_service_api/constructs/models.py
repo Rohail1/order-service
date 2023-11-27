@@ -43,7 +43,6 @@ class Models(Construct):
             partition_key={
                 'name': 'id', 'type': dynamodb.AttributeType.STRING
             },
-            sort_key={'name': 'created_at', 'type': dynamodb.AttributeType.STRING},
             removal_policy=RemovalPolicy.DESTROY
            )
 

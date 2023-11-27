@@ -44,8 +44,24 @@ class Orders(Construct):
 
         )
 
+        get_user_order_details = _lambda.Function(
+            self, 'get-user-order-details',
+            runtime=_lambda.Runtime.PYTHON_3_12,
+            code=_lambda.Code.from_asset('lambda/orders'),
+            handler='get_user_order_details.handler',
+            layers=[dependency_layer],
+            log_retention=cwLogs.RetentionDays.ONE_WEEK,
+            environment={
+                'USER_EMAIL_TABLE': models.user_email_table.table_name,
+                'ORDER_TABLE': models.order_table.table_name
+            }
+
+        )
+
         create_order_integration = HttpLambdaIntegration('create-order-integration', create_user_order)
         get_user_orders_integration = HttpLambdaIntegration('get-user-orders-integration', get_user_orders)
+        get_user_order_details_integration = HttpLambdaIntegration('get-user-order-details-integration',
+                                                                   get_user_order_details)
 
         api.add_routes(
             path='/api/users/{userid}/orders',
@@ -58,9 +74,18 @@ class Orders(Construct):
             integration=get_user_orders_integration
         )
 
+        api.add_routes(
+            path='/api/users/{userid}/orders/{orderid}',
+            methods=[apigateway.HttpMethod.GET],
+            integration=get_user_order_details_integration
+        )
+
         # Grant Permission to table
         models.user_email_table.grant_read_data(create_user_order)
         models.order_table.grant_read_write_data(create_user_order)
 
         models.user_email_table.grant_read_data(get_user_orders)
         models.order_table.grant_read_data(get_user_orders)
+
+        models.user_email_table.grant_read_data(get_user_order_details)
+        models.order_table.grant_read_data(get_user_order_details)
