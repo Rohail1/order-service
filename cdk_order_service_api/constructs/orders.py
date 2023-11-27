@@ -21,7 +21,7 @@ class Orders(Construct):
         super().__init__(scope, construct_id, **kwargs)
 
         order_topic = sns.Topic(self, 'order_updates')
-        subscription = sns.Subscription(self, 'email-subscription', endpoint='', # <- Add Email here
+        subscription = sns.Subscription(self, 'email-subscription', endpoint='example@abc.com', # <- Add Email here
                                         topic=order_topic, protocol=sns.SubscriptionProtocol.EMAIL)
 
         create_user_order = _lambda.Function(
